@@ -1,0 +1,103 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+}
+
+.main-content {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+.customer-section,
+.employee-section {
+  width: 48%;
+  border: 1px solid #ccc;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.message-section {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.message-item {
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.message-item h4 {
+  margin-top: 0;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.message-item p {
+  margin: 0 0 5px 0;
+  color: #666;
+}
+
+.message-item .timestamp {
+  font-size: 0.8em;
+  color: #999;
+}
+
+.message-item button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.message-item button:hover {
+  opacity: 0.9;
+}
+
+.message-form-section {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background-color: #f0f0f0;
+}
+
+.message-form-section input,
+.message-form-section textarea {
+  width: calc(100% - 20px);
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.message-form-section textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.message-form-section button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.message-form-section button:hover {
+  opacity: 0.9;
+}
