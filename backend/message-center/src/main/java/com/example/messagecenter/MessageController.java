@@ -48,7 +48,16 @@ public class MessageController {
         return messageRepository.findBySenderRole(role);
     }
 
-    
+    @GetMapping("/byRoleAndBoxType")
+    public List<Message> getMessagesByRoleAndBoxType(@RequestParam String role, @RequestParam String boxType) {
+        if ("inbox".equalsIgnoreCase(boxType)) {
+            return messageRepository.findByReceiverRole(role);
+        } else if ("outbox".equalsIgnoreCase(boxType)) {
+            return messageRepository.findBySenderRole(role);
+        } else {
+            throw new IllegalArgumentException("Invalid boxType: " + boxType + ". Must be 'inbox' or 'outbox'.");
+        }
+    }
 
     @DeleteMapping("/{id}")
     public void deleteMessage(@PathVariable String id) {

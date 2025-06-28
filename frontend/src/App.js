@@ -15,6 +15,7 @@ function App() {
     const [replyToMessage, setReplyToMessage] = useState(null);
     const [customerFormTitle, setCustomerFormTitle] = useState('Send New Message');
     const [employeeFormTitle, setEmployeeFormTitle] = useState('Send New Message');
+    const [selectedMessage, setSelectedMessage] = useState(null); // New state for selected message
 
     const openCustomerModal = (message = null) => {
         setReplyToMessage(message);
@@ -54,22 +55,20 @@ function App() {
         setEmployeeFormTitle('Send New Message');
     };
 
-    const fetchMessages = async (role, setter) => {
+    const fetchMessages = async (role, boxType, setter) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/messages/byRole?role=${role}`);
+            const response = await fetch(`http://localhost:8080/api/messages/byRoleAndBoxType?role=${role}&boxType=${boxType}`);
             const data = await response.json();
-            setter(data);
+            const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            setter(sortedData);
         } catch (error) {
-            console.error(`Error fetching ${role}:`, error);
+            console.error(`Error fetching ${role} ${boxType}:`, error);
         }
     };
 
     useEffect(() => {
-        fetchMessages('customer', 'inbox', setCustomerInbox);
-        fetchMessages('customer', 'outbox', setCustomerOutbox);
-
-        fetchMessages('employee', 'inbox', setEmployeeInbox);
-        fetchMessages('employee', 'outbox', setEmployeeOutbox);
+        fetchMessages('customer', setCustomerInbox);
+        fetchMessages('employee', setEmployeeInbox);
     }, []);
 
     const handleSendMessage = async (senderRole, receiverRole, messageData) => {
@@ -83,20 +82,17 @@ function App() {
             });
             const newMessage = await response.json();
 
-            // Update sender's outbox
+            // Update sender's outbox and receiver's inbox
             if (senderRole === 'customer') {
                 setCustomerOutbox(prev => [...prev, newMessage]);
                 setCustomerNewMessage({ subject: '', content: '' });
+                fetchMessages('customer', 'outbox', setCustomerOutbox); // Re-fetch outbox
+                fetchMessages('employee', 'inbox', setEmployeeInbox); // Re-fetch employee inbox
             } else if (senderRole === 'employee') {
                 setEmployeeOutbox(prev => [...prev, newMessage]);
                 setEmployeeNewMessage({ subject: '', content: '' });
-            }
-
-            // Update receiver's inbox
-            if (receiverRole === 'customer') {
-                setCustomerInbox(prev => [...prev, newMessage]);
-            } else if (receiverRole === 'employee') {
-                setEmployeeInbox(prev => [...prev, newMessage]);
+                fetchMessages('employee', 'outbox', setEmployeeOutbox); // Re-fetch outbox
+                fetchMessages('customer', 'inbox', setCustomerInbox); // Re-fetch customer inbox
             }
             setReplyToMessage(null); // Clear reply state after sending
             if (senderRole === 'customer') {
@@ -104,14 +100,11 @@ function App() {
             } else if (senderRole === 'employee') {
                 closeEmployeeModal();
             }
+            setSelectedMessage(null); // Close message detail after sending reply
         } catch (error) {
             console.error('Error sending message:', error);
         }
     };
-
-    
-
-    
 
     const handleCustomerInputChange = (name, value) => {
         setCustomerNewMessage(prev => ({ ...prev, [name]: value }));
@@ -119,6 +112,14 @@ function App() {
 
     const handleEmployeeInputChange = (name, value) => {
         setEmployeeNewMessage(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleMessageRowClick = (message) => {
+        setSelectedMessage(message);
+    };
+
+    const closeMessageDetail = () => {
+        setSelectedMessage(null);
     };
 
     return (
@@ -143,8 +144,8 @@ function App() {
                             />
                         </Modal>
                     )}
-                    <MessageList title="Customer Inbox" messages={customerInbox} role="customer" openModalForReply={openCustomerModal} />
-                    <MessageList title="Customer Outbox" messages={customerOutbox} role="customer" openModalForReply={openCustomerModal} />
+                    <MessageList title="Customer Inbox" messages={customerInbox} onRowClick={handleMessageRowClick} />
+                    <MessageList title="Customer Outbox" messages={customerOutbox} onRowClick={handleMessageRowClick} />
                 </div>
 
                 <div className="employee-section">
@@ -163,31 +164,65 @@ function App() {
                             />
                         </Modal>
                     )}
-                    <MessageList title="Employee Inbox" messages={employeeInbox} role="employee" openModalForReply={openEmployeeModal} />
-                    <MessageList title="Employee Outbox" messages={employeeOutbox} role="employee" openModalForReply={openEmployeeModal} />
+                    <MessageList title="Employee Inbox" messages={employeeInbox} onRowClick={handleMessageRowClick} />
+                    <MessageList title="Employee Outbox" messages={employeeOutbox} onRowClick={handleMessageRowClick} />
                 </div>
+
+                {selectedMessage && (
+                    <Modal onClose={closeMessageDetail}>
+                        <MessageDetail
+                            message={selectedMessage}
+                            onReplyClick={(message) => {
+                                if (selectedMessage.senderRole === 'customer') {
+                                    openCustomerModal(message);
+                                } else {
+                                    openEmployeeModal(message);
+                                }
+                                closeMessageDetail(); // Close message detail modal when reply is clicked
+                            }}
+                        />
+                    </Modal>
+                )}
             </main>
         </div>
     );
 }
 
-const MessageList = ({ title, messages, role, openModalForReply }) => (
+const MessageList = ({ title, messages, onRowClick }) => (
     <div className="message-section">
         <h3>{title}</h3>
         {messages.length === 0 ? (
             <p>No messages in {title.toLowerCase()}.</p>
         ) : (
-            messages.map(message => (
-                <div key={message.id} className="message-item">
-                    <h4>{message.subject}</h4>
-                    <p>From: {message.senderRole}</p>
-                    <p>To: {message.receiverRole}</p>
-                    <p>{message.content}</p>
-                    <p className="timestamp">{new Date(message.timestamp).toLocaleString()}</p>
-                    <button onClick={() => openModalForReply(message)}>Reply</button>
-                </div>
-            ))
+            <table className="message-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Content</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {messages.map(message => (
+                        <tr key={message.id} onClick={() => onRowClick(message)} className="message-row">
+                            <td>{message.subject}</td>
+                            <td>{message.content.substring(0, 100)}...</td> {/* Displaying a snippet of content */}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         )}
+    </div>
+);
+
+const MessageDetail = ({ message, onReplyClick }) => (
+    <div className="message-detail-section">
+        <h3>Message Details</h3>
+        <p><strong>Subject:</strong> {message.subject}</p>
+        <p><strong>From:</strong> {message.senderRole}</p>
+        <p><strong>To:</strong> {message.receiverRole}</p>
+        <p><strong>Content:</strong> {message.content}</p>
+        <p className="timestamp"><strong>Sent:</strong> {new Date(message.timestamp).toLocaleString()}</p>
+        <button onClick={() => onReplyClick(message)}>Reply</button>
     </div>
 );
 
