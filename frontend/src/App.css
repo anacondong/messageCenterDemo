@@ -99,6 +99,14 @@ button:hover {
   background-color: #f0f0f0;
 }
 
+.message-form-section label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #333;
+  text-align: left;
+}
+
 .message-form-section input,
 .message-form-section textarea {
   width: calc(100% - 20px);

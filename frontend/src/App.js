@@ -192,26 +192,23 @@ const MessageList = ({ title, messages, role, openModalForReply }) => (
 );
 
 const MessageForm = ({ senderRole, receiverRole, messageData, onInputChange, onSendMessage, replyToMessage, formTitle }) => {
-    useEffect(() => {
-        if (replyToMessage) {
-            onInputChange('subject', replyToMessage.subject);
-            onInputChange('content', replyToMessage.content);
-        }
-    }, [replyToMessage, onInputChange]);
-
     return (
         <div className="message-form-section">
             <h3>{formTitle}</h3>
             <form onSubmit={(e) => { e.preventDefault(); onSendMessage(senderRole, receiverRole, messageData); }}>
+                <label htmlFor="subject">Subject</label>
                 <input
                     type="text"
+                    id="subject"
                     name="subject"
                     placeholder="Subject"
                     value={messageData.subject}
                     onChange={(e) => onInputChange(e.target.name, e.target.value)}
                     required
                 />
+                <label htmlFor="content">Content</label>
                 <textarea
+                    id="content"
                     name="content"
                     placeholder="Content"
                     value={messageData.content}
