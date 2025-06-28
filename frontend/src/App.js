@@ -16,6 +16,8 @@ function App() {
     const [customerFormTitle, setCustomerFormTitle] = useState('Send New Message');
     const [employeeFormTitle, setEmployeeFormTitle] = useState('Send New Message');
     const [selectedMessage, setSelectedMessage] = useState(null); // New state for selected message
+    const [customerActiveTab, setCustomerActiveTab] = useState('inbox'); // New state for customer active tab
+    const [employeeActiveTab, setEmployeeActiveTab] = useState('inbox'); // New state for employee active tab
 
     const openCustomerModal = (message = null) => {
         setReplyToMessage(message);
@@ -67,9 +69,19 @@ function App() {
     };
 
     useEffect(() => {
-        fetchMessages('customer', setCustomerInbox);
-        fetchMessages('employee', setEmployeeInbox);
+        fetchMessages('customer', 'inbox', setCustomerInbox);
+        fetchMessages('customer', 'outbox', setCustomerOutbox);
+        fetchMessages('employee', 'inbox', setEmployeeInbox);
+        fetchMessages('employee', 'outbox', setEmployeeOutbox);
     }, []);
+
+    const handleCustomerTabChange = (tab) => {
+        setCustomerActiveTab(tab);
+    };
+
+    const handleEmployeeTabChange = (tab) => {
+        setEmployeeActiveTab(tab);
+    };
 
     const handleSendMessage = async (senderRole, receiverRole, messageData) => {
         try {
@@ -144,8 +156,28 @@ function App() {
                             />
                         </Modal>
                     )}
-                    <MessageList title="Customer Inbox" messages={customerInbox} onRowClick={handleMessageRowClick} />
-                    <MessageList title="Customer Outbox" messages={customerOutbox} onRowClick={handleMessageRowClick} />
+                    <div className="tabs">
+                        <button
+                            className={customerActiveTab === 'inbox' ? 'tab-button active' : 'tab-button'}
+                            onClick={() => handleCustomerTabChange('inbox')}
+                        >
+                            Inbox
+                        </button>
+                        <button
+                            className={customerActiveTab === 'outbox' ? 'tab-button active' : 'tab-button'}
+                            onClick={() => handleCustomerTabChange('outbox')}
+                        >
+                            Outbox
+                        </button>
+                    </div>
+                    <div className="tab-content">
+                        {customerActiveTab === 'inbox' && (
+                            <MessageList title="Customer Inbox" messages={customerInbox} onRowClick={handleMessageRowClick} />
+                        )}
+                        {customerActiveTab === 'outbox' && (
+                            <MessageList title="Customer Outbox" messages={customerOutbox} onRowClick={handleMessageRowClick} />
+                        )}
+                    </div>
                 </div>
 
                 <div className="employee-section">
@@ -164,8 +196,28 @@ function App() {
                             />
                         </Modal>
                     )}
-                    <MessageList title="Employee Inbox" messages={employeeInbox} onRowClick={handleMessageRowClick} />
-                    <MessageList title="Employee Outbox" messages={employeeOutbox} onRowClick={handleMessageRowClick} />
+                    <div className="tabs">
+                        <button
+                            className={employeeActiveTab === 'inbox' ? 'tab-button active' : 'tab-button'}
+                            onClick={() => handleEmployeeTabChange('inbox')}
+                        >
+                            Inbox
+                        </button>
+                        <button
+                            className={employeeActiveTab === 'outbox' ? 'tab-button active' : 'tab-button'}
+                            onClick={() => handleEmployeeTabChange('outbox')}
+                        >
+                            Outbox
+                        </button>
+                    </div>
+                    <div className="tab-content">
+                        {employeeActiveTab === 'inbox' && (
+                            <MessageList title="Employee Inbox" messages={employeeInbox} onRowClick={handleMessageRowClick} />
+                        )}
+                        {employeeActiveTab === 'outbox' && (
+                            <MessageList title="Employee Outbox" messages={employeeOutbox} onRowClick={handleMessageRowClick} />
+                        )}
+                    </div>
                 </div>
 
                 {selectedMessage && (
