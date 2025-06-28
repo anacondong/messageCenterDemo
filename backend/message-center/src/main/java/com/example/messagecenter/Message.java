@@ -16,5 +16,6 @@ public class Message {
     private String receiverRole; // "customer" or "employee"
     private String subject;
     private String content;
+    private String parentId; // New field to link to the original message in a conversation
     private LocalDateTime timestamp;
 }

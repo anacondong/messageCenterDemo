@@ -10,6 +10,49 @@ function App() {
 
     const [customerNewMessage, setCustomerNewMessage] = useState({ subject: '', content: '' });
     const [employeeNewMessage, setEmployeeNewMessage] = useState({ subject: '', content: '' });
+    const [showCustomerModal, setShowCustomerModal] = useState(false);
+    const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+    const [replyToMessage, setReplyToMessage] = useState(null);
+    const [customerFormTitle, setCustomerFormTitle] = useState('Send New Message');
+    const [employeeFormTitle, setEmployeeFormTitle] = useState('Send New Message');
+
+    const openCustomerModal = (message = null) => {
+        setReplyToMessage(message);
+        if (message) {
+            setCustomerNewMessage({ subject: `Re: ${message.subject}`, content: `\n\n--- Original Message ---\nFrom: ${message.senderRole}\nTo: ${message.receiverRole}\nSubject: ${message.subject}\nDate: ${new Date(message.timestamp).toLocaleString()}\n\n${message.content}` });
+            setCustomerFormTitle('Reply to Message');
+        } else {
+            setCustomerNewMessage({ subject: '', content: '' });
+            setCustomerFormTitle('Send New Message');
+        }
+        setShowCustomerModal(true);
+    };
+
+    const closeCustomerModal = () => {
+        setShowCustomerModal(false);
+        setReplyToMessage(null);
+        setCustomerNewMessage({ subject: '', content: '' });
+        setCustomerFormTitle('Send New Message');
+    };
+
+    const openEmployeeModal = (message = null) => {
+        setReplyToMessage(message);
+        if (message) {
+            setEmployeeNewMessage({ subject: `Re: ${message.subject}`, content: `\n\n--- Original Message ---\nFrom: ${message.senderRole}\nTo: ${message.receiverRole}\nSubject: ${message.subject}\nDate: ${new Date(message.timestamp).toLocaleString()}\n\n${message.content}` });
+            setEmployeeFormTitle('Reply to Message');
+        } else {
+            setEmployeeNewMessage({ subject: '', content: '' });
+            setEmployeeFormTitle('Send New Message');
+        }
+        setShowEmployeeModal(true);
+    };
+
+    const closeEmployeeModal = () => {
+        setShowEmployeeModal(false);
+        setReplyToMessage(null);
+        setEmployeeNewMessage({ subject: '', content: '' });
+        setEmployeeFormTitle('Send New Message');
+    };
 
     const fetchMessages = async (role, setter) => {
         try {
@@ -22,11 +65,11 @@ function App() {
     };
 
     useEffect(() => {
-        fetchMessages('customer', setCustomerInbox);
-        fetchMessages('customer', setCustomerOutbox);
+        fetchMessages('customer', 'inbox', setCustomerInbox);
+        fetchMessages('customer', 'outbox', setCustomerOutbox);
 
-        fetchMessages('employee', setEmployeeInbox);
-        fetchMessages('employee', setEmployeeOutbox);
+        fetchMessages('employee', 'inbox', setEmployeeInbox);
+        fetchMessages('employee', 'outbox', setEmployeeOutbox);
     }, []);
 
     const handleSendMessage = async (senderRole, receiverRole, messageData) => {
@@ -36,7 +79,7 @@ function App() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ ...messageData, senderRole, receiverRole }),
+                body: JSON.stringify({ ...messageData, senderRole, receiverRole, parentId: replyToMessage ? replyToMessage.id : null }),
             });
             const newMessage = await response.json();
 
@@ -55,8 +98,12 @@ function App() {
             } else if (receiverRole === 'employee') {
                 setEmployeeInbox(prev => [...prev, newMessage]);
             }
-
-            
+            setReplyToMessage(null); // Clear reply state after sending
+            if (senderRole === 'customer') {
+                closeCustomerModal();
+            } else if (senderRole === 'employee') {
+                closeEmployeeModal();
+            }
         } catch (error) {
             console.error('Error sending message:', error);
         }
@@ -64,21 +111,7 @@ function App() {
 
     
 
-    const handleDeleteMessage = async (id) => {
-        try {
-            await fetch(`http://localhost:8080/api/messages/${id}`, {
-                method: 'DELETE',
-            });
-            // Refresh all message lists after deletion
-            fetchMessages('customer', setCustomerInbox);
-            fetchMessages('customer', setCustomerOutbox);
-
-            fetchMessages('employee', setEmployeeInbox);
-            fetchMessages('employee', setEmployeeOutbox);
-        } catch (error) {
-            console.error('Error deleting message:', error);
-        }
-    };
+    
 
     const handleCustomerInputChange = (name, value) => {
         setCustomerNewMessage(prev => ({ ...prev, [name]: value }));
@@ -96,35 +129,49 @@ function App() {
             <main className="main-content">
                 <div className="customer-section">
                     <h2>Customer Portal</h2>
-                    <MessageForm
-                        senderRole="customer"
-                        receiverRole="employee"
-                        messageData={customerNewMessage}
-                        onInputChange={handleCustomerInputChange}
-                        onSendMessage={handleSendMessage}
-                    />
-                    <MessageList title="Customer Inbox" messages={customerInbox} role="customer" onDelete={handleDeleteMessage} />
-                    <MessageList title="Customer Outbox" messages={customerOutbox} role="customer" onDelete={handleDeleteMessage} />
+                    <button onClick={() => openCustomerModal()}>New Message</button>
+                    {showCustomerModal && (
+                        <Modal onClose={closeCustomerModal}>
+                            <MessageForm
+                                senderRole="customer"
+                                receiverRole="employee"
+                                messageData={customerNewMessage}
+                                onInputChange={handleCustomerInputChange}
+                                onSendMessage={handleSendMessage}
+                                replyToMessage={replyToMessage}
+                                formTitle={customerFormTitle}
+                            />
+                        </Modal>
+                    )}
+                    <MessageList title="Customer Inbox" messages={customerInbox} role="customer" openModalForReply={openCustomerModal} />
+                    <MessageList title="Customer Outbox" messages={customerOutbox} role="customer" openModalForReply={openCustomerModal} />
                 </div>
 
                 <div className="employee-section">
                     <h2>Employee Portal</h2>
-                    <MessageForm
-                        senderRole="employee"
-                        receiverRole="customer"
-                        messageData={employeeNewMessage}
-                        onInputChange={handleEmployeeInputChange}
-                        onSendMessage={handleSendMessage}
-                    />
-                    <MessageList title="Employee Inbox" messages={employeeInbox} role="employee" onDelete={handleDeleteMessage} />
-                    <MessageList title="Employee Outbox" messages={employeeOutbox} role="employee" onDelete={handleDeleteMessage} />
+                    <button onClick={() => openEmployeeModal()}>New Message</button>
+                    {showEmployeeModal && (
+                        <Modal onClose={closeEmployeeModal}>
+                            <MessageForm
+                                senderRole="employee"
+                                receiverRole="customer"
+                                messageData={employeeNewMessage}
+                                onInputChange={handleEmployeeInputChange}
+                                onSendMessage={handleSendMessage}
+                                replyToMessage={replyToMessage}
+                                formTitle={employeeFormTitle}
+                            />
+                        </Modal>
+                    )}
+                    <MessageList title="Employee Inbox" messages={employeeInbox} role="employee" openModalForReply={openEmployeeModal} />
+                    <MessageList title="Employee Outbox" messages={employeeOutbox} role="employee" openModalForReply={openEmployeeModal} />
                 </div>
             </main>
         </div>
     );
 }
 
-const MessageList = ({ title, messages, role, onDelete }) => (
+const MessageList = ({ title, messages, role, openModalForReply }) => (
     <div className="message-section">
         <h3>{title}</h3>
         {messages.length === 0 ? (
@@ -137,35 +184,55 @@ const MessageList = ({ title, messages, role, onDelete }) => (
                     <p>To: {message.receiverRole}</p>
                     <p>{message.content}</p>
                     <p className="timestamp">{new Date(message.timestamp).toLocaleString()}</p>
-                    
+                    <button onClick={() => openModalForReply(message)}>Reply</button>
                 </div>
             ))
         )}
     </div>
 );
 
-const MessageForm = ({ senderRole, receiverRole, messageData, onInputChange, onSendMessage }) => (
-    <div class="message-form-section">
-        <h3>Send Message as {senderRole}</h3>
-        <form onSubmit={(e) => { e.preventDefault(); onSendMessage(senderRole, receiverRole, messageData); }}>
-            <input
-                type="text"
-                name="subject"
-                placeholder="Subject"
-                value={messageData.subject}
-                onChange={(e) => onInputChange(e.target.name, e.target.value)}
-                required
-            />
-            <textarea
-                name="content"
-                placeholder="Content"
-                value={messageData.content}
-                onChange={(e) => onInputChange(e.target.name, e.target.value)}
-                required
-            ></textarea>
-            <button type="submit">Send</button>
-        </form>
-    </div>
-);
+const MessageForm = ({ senderRole, receiverRole, messageData, onInputChange, onSendMessage, replyToMessage, formTitle }) => {
+    useEffect(() => {
+        if (replyToMessage) {
+            onInputChange('subject', replyToMessage.subject);
+            onInputChange('content', replyToMessage.content);
+        }
+    }, [replyToMessage, onInputChange]);
+
+    return (
+        <div className="message-form-section">
+            <h3>{formTitle}</h3>
+            <form onSubmit={(e) => { e.preventDefault(); onSendMessage(senderRole, receiverRole, messageData); }}>
+                <input
+                    type="text"
+                    name="subject"
+                    placeholder="Subject"
+                    value={messageData.subject}
+                    onChange={(e) => onInputChange(e.target.name, e.target.value)}
+                    required
+                />
+                <textarea
+                    name="content"
+                    placeholder="Content"
+                    value={messageData.content}
+                    onChange={(e) => onInputChange(e.target.name, e.target.value)}
+                    required
+                ></textarea>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    );
+};
 
 export default App;
+
+const Modal = ({ onClose, children }) => {
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <button className="modal-close-button" onClick={onClose}>&times;</button>
+                {children}
+            </div>
+        </div>
+    );
+};

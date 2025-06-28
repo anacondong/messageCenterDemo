@@ -26,17 +26,26 @@ public class MessageController {
     @PostMapping
     public Message createMessage(@RequestBody Message message) {
         message.setTimestamp(LocalDateTime.now());
+        // If a parentId is provided, ensure it's not empty
+        if (message.getParentId() != null && message.getParentId().isEmpty()) {
+            message.setParentId(null); // Set to null if empty string
+        }
         return messageRepository.save(message);
     }
 
-    @GetMapping("/byRole")
-    public List<Message> getMessagesByRole(@RequestParam String role) {
-        if ("customer".equals(role)) {
-            return messageRepository.findByReceiverRole("customer");
-        } else if ("employee".equals(role)) {
-            return messageRepository.findByReceiverRole("employee");
-        }
-        return List.of(); // Return empty list for invalid role
+    @GetMapping("/thread/{parentId}")
+    public List<Message> getMessageThread(@PathVariable String parentId) {
+        return messageRepository.findByParentId(parentId);
+    }
+
+    @GetMapping("/inbox")
+    public List<Message> getInboxMessages(@RequestParam String role) {
+        return messageRepository.findByReceiverRole(role);
+    }
+
+    @GetMapping("/outbox")
+    public List<Message> getOutboxMessages(@RequestParam String role) {
+        return messageRepository.findBySenderRole(role);
     }
 
     

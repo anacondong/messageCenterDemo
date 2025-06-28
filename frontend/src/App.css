@@ -53,18 +53,42 @@
   color: #999;
 }
 
-.message-item button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
+/* General Button Styles */
+button {
+  padding: 10px 15px;
   border-radius: 5px;
+  border: none;
   cursor: pointer;
-  margin-right: 5px;
+  font-size: 1em;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  margin-right: 8px; /* Add some spacing between buttons */
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+/* Message Item Buttons (Reply) */
+.message-item button {
+  background-color: #007bff; /* Blue for Reply */
+  color: white;
 }
 
 .message-item button:hover {
   opacity: 0.9;
+}
+
+/* New Message Button */
+.customer-section > button,
+.employee-section > button {
+  background-color: #28a745; /* Green for New Message */
+  color: white;
+  margin-bottom: 15px;
+}
+
+.customer-section > button:hover,
+.employee-section > button:hover {
+  background-color: #218838;
 }
 
 .message-form-section {
@@ -90,14 +114,50 @@
 }
 
 .message-form-section button {
-  background-color: #28a745;
+  background-color: #007bff; /* Blue for Send */
   color: white;
-  border: none;
   padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
 }
 
 .message-form-section button:hover {
-  opacity: 0.9;
+  background-color: #0056b3;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  color: #333;
+}
+
+.modal-close-button:hover {
+  color: #000;
 }
